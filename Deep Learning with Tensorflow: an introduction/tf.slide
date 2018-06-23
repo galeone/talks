@@ -1,0 +1,361 @@
+Deep Learning with Tensorflow: an introduction
+22 Jun 2018
+Tags: tensorflow python deep-learning
+
+Paolo Galeone
+nessuno@nerdz.eu
+https://pgaleone.eu/
+https://github.com/galeone
+https://stackoverflow.com/users/2891324/nessuno
+@paolo_galeone
+
+* Topics at a glance
+
+*Deep*Learning*
+
+- Deep Learning tasks
+- Neural Network architectures
+
+*Tensorflow*
+
+- Tensors
+- Computation graph & Sessions
+- Symbolic computing
+- Define Deep learning architectures
+- Image classification with tf.estimator and tf.data API
+
+* Deep Learning
+
+* Deep Learning Tasks
+- Image classification
+- Object localization and classification
+.image images/classification-localization.png _ 250
+
+- Speech recognition (is a problem on images!)
+- Quality control
+- Defect detection
+- Fraud detection
+- Robot motion
+- ... The applications are pretty much infinite.
+
+* Deep learning: just stacked layers of neurons?
+*Neural*Networks*: supervised learning models made by artificial neurons
+*Deep*Neural*Networks*: neural networks with a number of layer *greater*than*1*
+.image images/deep_nn.png
+
+Depending on the network topology, neural netwokrs can learn to extract different features and thus *solve*different*problems*.
+
+* Convolutional Neural Networks
+
+Neurons are organized as a volume of convolutional filters. This layers *learn*to*extract*different*feature* that are more complex as the network gets deep.
+
+.image images/conv_net.png
+
+* Tensorflow
+
+* Overview
+
+From the Tensorlow [[https://www.tensorflow.org/versions/r0.8/get_started/basic_usage.html][documentation]]:
+
+TensorFlow is a programming system in which you *represent*computations*as*graphs*.
+
+Nodes in the graph are called *ops* (short for operations).
+
+An op takes zero or more Tensors, performs some computation, and produces zero or more Tensors.
+
+To compute anything, a graph must be launched in a Session. A Session places the graph ops onto Devices, such as CPUs or GPUs, and provides methods to execute them.
+
+These methods return tensors produced by ops as *numpy*ndarray* objects in *Python*, and as tensorflow::Tensor instances in *C*and*C++*.
+
+* What is a Tensor?
+
+Formally, tensors are multilinear maps from vector spaces to the real numbers.
+Let V: vector space, V* its dual space
+.image images/tensor-def.png
+- A scalar is a tensor
+.image images/tensor-scalar.png
+- A vector is a tensor:
+.image images/tensor-vector.png
+- A matrix is a tensor:
+.image images/tensor-matrix.png
+
+* What is a Tensor?
+
+Intuitively you can think of a Tensor as a *n-dimensional*array*or*list*.
+Tensorflow programs use a tensor data structure to represent *all*data*.
+
+Every tensor has:
+
+A *Rank*: the number of dimensions of the tensor. The following tensor has a rank of 2:
+
+    t = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+A *Shape*: is another way to describe tensors dimensionality.
+- A tensor with *rank* 0 has shape [] (a scalar)
+- A tensor with *rank* 1 has shape [D0] (A 1-D tensor with shape=[5])
+- A tensor with *rank* 2 has shape [D0, D1] (A 2-D tensor with shape=[3,4])
+- ...
+
+A *Type*: Tensorflow provides different types assignable to a tensor: tf.float32, tf.float64, tf.int8, ...
+
+* The computation graph
+
+The computation graph is the definition of the relations among input tensors, ops, and output tensors.
+
+.image images/graph_vis_animation.gif 
+
+* The static computational graph: 2 phases
+*Construction*phase*: assembles the graph. Defines the relations between tensors and ops.
+
+	import tensorflow as tf
+	
+	# Create a Constant op that produces a 1x2 matrix.  The op is
+	# added as a node to the default graph.
+	#
+	# The value returned by the constructor represents the output
+	# of the Constant op.
+	matrix1 = tf.constant([[3., 3.]])
+	
+	# Create another Constant that produces a 2x1 matrix.
+	matrix2 = tf.constant([[2.],[2.]])
+	
+	# Create a Matmul op that takes 'matrix1' and 'matrix2' as inputs.
+	# The returned value, 'product', represents the result of the matrix
+	# multiplication.
+	product = tf.matmul(matrix1, matrix2)
+
+
+* The static computational graph: 2 phases
+- *Execution*phase*: uses a *session* to execute ops in the graph on a specified device.
+
+    # Launch the default graph.
+    with tf.Session() as sess:
+        with tf.device("/gpu:1"):
+            # To run the matmul op we call the session 'run()' method, passing 'product'
+            # which represents the output of the matmul op.  This indicates to the call
+            # that we want to get the output of the matmul op back.
+            #
+            # All inputs needed by the op are run automatically by the session.  They
+            # typically are run in parallel.
+            #
+            # The call 'run(product)' thus causes the execution of three ops in the
+            # graph: the two constants and matmul.
+            #
+            # The output of the op is returned in 'result' as a numpy `ndarray` object.
+            result = sess.run(product)
+            print(result)
+            # ==> [[ 12.]]
+
+* Symbolic computing
+*Placeholders*:
+Until now, we used Tensorflow graph to compute ops on constant values.
+But in Machine Learning we need to define a model and then *feed*it* with data.
+
+To achieve Tensorflow has the concept of *placeholder*: a symbolic value placed in the graph that has to be replaced with a real value at execution time.
+
+The common use case is the use of placeholders as input value of the model.
+
+    # Input placeholder. An undefined number of rows and 784 columns (28x28 ximage)
+    x = tf.placeholder(tf.float32, [None, 784])
+
+* Symbolic computing
+*Variables*
+The optimization algorithms used in Machine Learning work with incremental changes of parameters, in order to optimize a function.
+
+Tensorflow variables maintain state across executions of the graph. Thus the optimization algorithm update the variable values to minimize the loss.
+
+    # W is the "weights" variable, initialized with a tensor with rank 2, with size 784x10
+    W = tf.Variable(tf.zeros([784,10]))
+    # b is the "bias" variable, initialized with a tensor of 10 zeros
+    b = tf.Variable(tf.zeros([10]))
+
+    # y is the softmax operation, on the 10 values returned from tf.matmul(x,W) + b
+    y = tf.nn.softmax(tf.matmul(x,W) + b)
+
+
+* Symbolic computing
+Using a graph to represent computations, tensorflow *knows* the flow of tensors across this graph.
+Therefore, after defining a *loss*function* for the current model, tensorflow can apply the *backpropagation*algorithm* in order to efficiently determine how your variables affect the cost you ask it to minimize.
+   
+    # Define a placeholder that represents the real label for the current batch
+    # Where None in the first dimension indicate that the batch size can by any
+    y_ = tf.placeholder(tf.float32, [None, 10])
+
+    # Define the loss function (cross entropy):
+    cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
+    
+    # Define the train step
+    train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
+
+That's it.
+
+* Deep learning
+Tensorflow makes the definition of deep architectures easy.
+The following example is a simple 2 layer CNN that expects as input a batch of 28x28x3 images and learns to extract features that will be used *to*classify*the*input*.
+
+To make the code easyer to read we define some helper functions (just for learning! tensorflow has *a*lot* of layers already implemented in the `tf.layers` package):
+
+    def weight_variable(shape):
+        initial = tf.truncated_normal(shape, stddev=0.1)
+        return tf.Variable(initial)
+    
+    def bias_variable(shape):
+        initial = tf.constant(0.1, shape=shape)
+        return tf.Variable(initial)
+    
+    # 2d convolution of x and W, with stride 1 along every dimension and 0 padding
+    def conv2d(x, W):
+        return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
+
+    # max pooling, with a 2x2 kernel and a stride of 2 along x and y
+    def max_pool_2x2(x):
+        return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+
+* Deep learning
+
+The first conv layer extracts 32 features for every 5x5 patch across the input image
+	
+	with tf.variable_scope('layer_1'):
+		# Weight and bias for the first convolutional layer
+		W_conv1 = weight_variable([5, 5, 3, 32])
+		b_conv1 = bias_variable([32])
+		# convolution. Use of ReLU activation function
+		h_conv1 = tf.nn.relu(conv2d(model_input, W_conv1) + b_conv1)
+		# max pool
+		h_pool1 = max_pool_2x2(h_conv1)
+
+The second conv layer extracts 64 features for every 5x5x32 input volume.
+
+	with tf.variable_scope('layer_2'):
+		W_conv2 = weight_variable([5, 5, 32, 64])
+		b_conv2 = bias_variable([64])
+		
+		h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
+		h_pool2 = max_pool_2x2(h_conv2)
+
+* Deep learning
+
+The first FC layer has 1024 neurons fully connected to the 7*7*64 features extracted.
+
+	with tf.variable_scope('fc_layer1'):
+		W_fc1 = weight_variable([7 * 7 * 64, 1024])
+		b_fc1 = bias_variable([1024])
+
+		h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*64])
+		h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
+
+Finally the read out layer converts the 1024 features extracted to N values (that will be treated as a vector of probabilities by the loss function)
+
+	with tf.variable_scope('read_out_fc2'):
+		W_fc2 = weight_variable([1024, N)
+		b_fc2 = bias_variable([N])
+
+		predictions = tf.matmul(h_fc1, W_fc2) + b_fc2
+
+How to use this network to build an image classifier?
+
+* Classify Cat/Dog images using tf.esitmator and tf.data
+
+`tf.Esimator` is an high level API that greatly simplifies machine learning programming. Estimators encapsulate the following actions:
+
+- training/evaluation
+- evaluation/serving
+
+The `tf.data` API enables you to build complex input pipelines from simple, reusable pieces. For example, the pipeline for an image model might aggregate data from files in a distributed file system, apply random perturbations to each image, and merge randomly selected images into a batch for training.
+
+The `tf.estimator.Estimator` constructor, requires the `model_fn`: a function that returns the graph definition.
+The `tf.estimator.Estimator.{train,evaluate}` methods, require also the `input_fn`: a function that returns the required input for training/evaluation.
+
+Let's build them.
+
+* Cat vs Dog - step 1: get the data and build the input pipeline
+
+- Download the dataset: [[http://files.fast.ai/data/dogscats.zip]]
+- Build the input function: just a bunch of functions that create the stream of pairs (image, label):
+
+    def get_input_fn(file_pattern, image_size=(28, 28), shuffle=False, batch_size=64, num_epochs=None, buffer_size=4096):
+
+        def _img_string_to_tensor(image_string, image_size=(28, 28)):
+            image_decoded = tf.image.decode_jpeg(image_string, channels=3)
+            image_decoded_as_float = tf.image.convert_image_dtype(image_decoded, dtype=tf.float32)
+            image_resized = tf.image.resize_images(image_decoded_as_float, size=image_size)
+            return image_resized
+
+        def _path_to_img(path):
+            # Get the parent folder of this file to get its class
+            label = tf.cond(
+                        tf.equal(tf.string_split([path], delimiter='/').values[-2], "dogs"),
+                        lambda: 0, lambda: 1)
+
+            image_string = tf.read_file(path) # read image and process it
+            image_resized = _img_string_to_tensor(image_string, image_size)
+
+            return image_resized, label
+
+* Cat vs Dog - step 1: get the data and build the input pipeline
+
+    ...
+        def _input_fn():
+
+            dataset = tf.data.Dataset.list_files(file_pattern)
+
+            if shuffle:
+                dataset = dataset.apply(tf.contrib.data.shuffle_and_repeat(buffer_size, num_epochs))
+            else:
+                dataset = dataset.repeat(num_epochs)
+
+            dataset = dataset.map(_path_to_img)
+            dataset = dataset.batch(batch_size).prefetch(buffer_size)
+
+            iterator = dataset.make_one_shot_iterator()
+            return iterator.get_next()
+
+        return _input_fn
+
+The `get_input_fn` returns the `_input_fn` function that creates a `tf.data.Dataset` object ready to use in a iterator fashion.
+
+* Cat vs Dog - step 2: build the model_fn 
+
+	def model_fn(features, labels, mode, params):
+		predictions = define_model(features)
+		loss = tf.reduce_mean(
+			tf.nn.sparse_softmax_cross_entropy_with_logits(
+				labels=labels, logits=predictions))
+
+        # Compute evaluation metrics.
+        predicted_classes = tf.argmax(predictions, 1)
+        accuracy = tf.metrics.accuracy(labels=labels, predictions=predicted_classes)
+        metrics = {'accuracy': accuracy}
+        tf.summary.scalar('accuracy', accuracy[1])
+        
+		if mode == tf.estimator.ModeKeys.TRAIN:
+			optimizer = tf.train.GradientDescentOptimizer(0.5)
+			train_op = optimizer.minimize(
+				loss=loss, global_step=tf.train.get_global_step())
+			return tf.estimator.EstimatorSpec(
+				mode, predictions=predictions, loss=loss, train_op=train_op,eval_metric_ops=metrics)
+		return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
+
+The `model_fn` must return a `tf.estimator.EstimatorSpec` that defines the behaviour of the model.
+
+* Train end evaluate
+
+Once defined the `model_fn` and the `get_input_fn` we can train end evalute the model in just 2 lines of code:
+
+    tf.logging.set_verbosity(tf.logging.INFO)
+
+    data_directory = "/data/dogscats"
+    model = tf.estimator.Estimator(model_fn, "./model_dir")
+
+    train_files = os.path.join(data_directory, 'train', '**/*.jpg')
+    train_input_fn = get_input_fn(train_files, shuffle=True, num_epochs=10)
+
+    eval_files = os.path.join(data_directory, 'valid', '**/*.jpg')
+    eval_input_fn = get_input_fn(eval_files, num_epochs=1)
+
+    model.train(train_input_fn)
+    model.evaluate(eval_input_fn)
+
+While the model train, we can open `tensorboard --logdir model_dir` to see the training progress.
+
+[[http://localhost:6006/]]
