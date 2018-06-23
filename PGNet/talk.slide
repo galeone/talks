@@ -1,0 +1,173 @@
+Rete neurale convoluzionale per classificazione di immagini e localizzazione di oggetti
+7 Ottobre 2016
+Tags: tensorflow python cnn object-detection classification
+
+Paolo Galeone
+paolo.galeone@studio.unibo.it
+
+* Visione artificiale & Deep learning
+
+* Alcuni compiti della visione artificiale
+
+*Oggetto*singolo*:
+- Classificazione
+- Classificazione e localizzazione
+.image images/classification-localization.png _ 250
+
+*Più*oggetti*:
+- Classificazione e localizzazione di oggetti
+- Segmentazione
+
+.image images/detection-segmentation.png _ 250
+
+* Deep Learning
+*Reti*neurali*: modelli di apprendimento supervisionato composti da neuroni artificiali, ispirati al funzionamento dei neuroni biologici.
+*Reti*Neurali*Deep*: reti neurali con un numero di hidden layer maggiore di 1.
+.image images/deep_nn.png
+
+A seconda della topologia della rete, le reti neurali hanno applicazioni negli ambiti più disparati.
+
+* Architetture convoluzionali: CNN
+Neuroni organizzati in volumi di filtri convoluzionali. I layer apprendono la capacità di estrarre features via via più complesse all'aumentare della profondità della rete.
+.image images/conv_net.png
+
+* Classificazione e localizzazione
+.image images/regression-head.png
+*1°*train*: intera rete e classification head
+*2°*train*: utilizzando la CNN come feature extractor, si allena la regression head singolarmente
+
+* Classificazione e localizzazione
+*Problema*: le immagini hanno dimensioni diverse, l'oggetto può trovarsi in una posizione non centrale ed avere dimensioni diverse da quelle apprese.
+*Soluzione*1*: Architettura *completamente*convoluzionale* a due teste - Overfeat [1]
+
+.image images/3rd-step.png 150 _
+
+*Soluzione*2*: R-CNN = *Region*Proposal* + CNN (+ SVM) [2]
+
+.image images/r-cnn.png 180 _
+
+*Problemi*:
+
+1. Tempo di esecuzione: ogni regione proposta dev'essere analizzata singolarmente.
+2. Le SVM ed i regressori delle coordinate necessitano di train ad-hoc.
+
+* Architettura sviluppata
+
+* Osservazione fondamentale
+
+.image images/main.png 350 _
+
+Risultato: *convoluzione*equivalente*.
+
+.image images/conv_equiv.png
+
+*Conseguenza*: considerazioni geometriche sul risultato.
+
+* Geometria
+L' *area* delle zone analizzate dell' *immagine*originale* è funzione dei fattori di scala tra:
+
+1. Immagine originaria e l'immagine ridimensionata posta in input
+2. Input atteso dalla rete e l' *area*del*filtro*di*convoluzione*equivalente*
+
+Mentre la *posizione* è funzione:
+
+1. Dai due fattori di scala di cui sopra
+2. Dallo stride applicato alla convoluzione equivalente
+
+*Conseguenza*: è possibile associare ad ogni cella del risultato, un rettangolo nell'immagine in input (e quindi originaria).
+Indicando con M (map) la superficie di base del parallelepipedo rettangolo ed estraendo le classi con maggior probabilità (top-1) per ogni posizione: 
+.image images/rect_rel.png
+
+* Classificazione mediante localizzazione
+
+*Conseguenza*1*: contando le *frequenze*relative* associate alle classi di maggior probabilità è possibile classificare l'immagine *mediante*localizzazione*:
+
+.image images/freq_rel.png 
+.image images/loc_freq.png 250 _
+
+* Localizzazione mediante classificazione
+
+*Conseguenza*2*: localizzare oggetti in base alle intersezioni delle regioni individuate nell'immagine originaria
+
+.image images/intersect.png
+
+*Clustering* (MFSet) dei rettangoli basandosi sulla similarità della loro posizione con possibile thresolding delle frequenze e delle probabilità.
+.image images/loc_clust.png 250 _
+
+* Region proposal
+*Conseguenza*3*: aumentare la precisione nella detection utilizzando la rete *come*region*proposal*.
+
+- Estrarre le zone dell'immagine originaria con stessa classe top-1
+- Ridimensionarle all'input atteso dalla rete (200x200)
+- Classificazione
+
+Se la label predetta è *concorde* allora il match è valido.
+
+.image images/loc_rp.png 250 _
+
+* Architettura
+
+*Problema*: l'area del filtro di convoluzione equivalente dev'essere sufficientemente ampia per poter *analizzare*zone*contenenti*oggetti*.
+*Conseguenza*: grandi dimensioni del filtro, che implicano un *grande*numero*di*parametri* da apprendere ⇒ train e test lenti.
+
+*Soluzione*: definire una FCNN che utilizzi una *Atrous*Convolution* per realizzare l'ultima convoluzione non unitaria.
+
+.image images/atrous_conv.png
+
+Numero di parametri costante con receptive field grande all'aumentare del parametro rate _r_.
+
+* Architettura
+
+Il receptive field (RF) del filtro equivalente vincola l'intera architettura della rete.
+.image images/pgnet_arch.png 300 _
+- *FCNN*. Input atteso di 200x200. Filtro di convoluzione equivalente 25x25. Sf = 8
+- *No*pooling*
+- *Batch*Normalization* (BN): per velocizzare la fase di train
+- *Dropout*: per la regolarizzazione, ridurre _overfitting_
+
+* Implementazione & train
+
+- Implementata usando *Tensorflow*: framework di deep learning by Google
+- Train in *sola*classificazione*
+- Dataset PASCAL VOC 2012: 20 classi disgiunte, 27157 oggetti annotati + data augmentation.
+- Loss function: cross entropia
+.image images/ce.png
+- Algoritmo di ottimizzazione utilizzato: *ADAM*
+- Uso alternativo del dropout
+
+* Utilizzo alternativo del dropout
+
+*Canonicamente*: probabilità di drop differenti e costanti, per ogni layer.
+*Rete*Svilppata*: stessa probabilità di drop per tutta la rete. Riduzione della probabilità quando l'accuracy sul validation set non aumenta.
+
+*Conseguenza*: è possibile aumentare la validation accuracy mantenendo il numero di parametri pari ad 1.
+.image images/valid_acc.png 350 _
+
+* Risultati
+
+.image images/collage.png
+
+* Risultati
+*Dataset*di*test*: PASCAL VOC 2012, 10991 immagini non annotate.
+
+*Classificazione*: l'approccio della classificazione via localizzazione porta a risultati tanto migliori quanto migliore è la qualità del classificatore
+
+.image images/results.png
+
+L'accuracy descresce in funzione dello sbilanciamente del dataset di train.
+
+*Localizzazione*: valide le stesse considerazioni per la classificazione, penalizzate dalla scelta dell'algoritmo di clustering.
+
+* Conclusione
+L'architettura sviluppata è l'unica architettura convoluzionale monolitica che basandosi sulle osservazioni precedenti è in grado di effettuare:
+
+- Classificazione
+- Localizzazione mediante classificazione
+- Object Detection mediante classificazione
+- Classificazione mediante localizzazione
+- Region Proposal mediante classificazione
+
+*Sviluppi*futuri*:
+1. Definire un algoritmo di clustering *ad*-*hoc* che tenga conto non solo della similarità tra rettangoli, ma anche della distribuzione delle probabilità associate alle regioni.
+2. Migliorare la qualità del classificatore, risolvendo il problema dello sbilanciameto del dataset di train.
+
