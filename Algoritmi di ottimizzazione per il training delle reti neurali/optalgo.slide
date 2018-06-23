@@ -1,0 +1,125 @@
+Algoritmi di ottimizzazione per il training delle reti neurali
+5 Luglio 2016
+Tags: tensorflow ottimizzazione gradient-descent
+
+Paolo Galeone
+paolo.galeone@studio.unibo.it
+https://github.com/galeone
+https://www.nerdz.eu/nessuno.
+@paolo_galeone
+
+* Training delle reti neurali come problema di ottimizzazione
+* Training delle reti neurali come problema di ottimizzazione
+
+Lo scopo delle reti neurali, nell'ambito degli algoritmi di apprendimento supervisionato, è quello di classificare correttamente istanze in ingresso dopo aver appreso una teoria corretta e consistente durante la fase di training.
+L'informazione formante la teoria viene memorizzata nell'insieme dei pesi W che collegano tra di loro i neuroni.
+L'uscita di una rete neurale ha cardinalità M che è pari al numero di classi che questa è in grado di classificare.
+
+Data la funzione del modello di classificazione:
+.image images/net-fn.png
+È necessario mettere in relazione il valore reale associato alla classe dell'istanza in ingresso e quello predetto dalla rete: per questo motivo si usano le loss functions.
+.image images/loss-fn.png
+
+* Training delle reti neurali come problema di ottimizzazione
+La loss function misura la discrepanza tra il valore predetto e quello reale associato all'istanza. Il processo di apprendimento varia il valore dei pesi cercando di rendere minimo il valore della loss.
+
+Si può quindi vedere il processo di apprendimento come il processo di modifica dei pesi delle connessioni, alla ricerca di quelli che minimizzano la discrepanza.
+
+La loss function è quindi una funzione che ha un numero di variabili pari al numero dei pesi della rete.
+Per minimizzare tale funzione è necessario applicare metodi a raffinamento iterativo: partire da una soluzione iniziale e cercare iterativamente di migliorarla.
+
+* Discesa del gradiente
+Anziché procedere alla cieca, cercando di minimizzare il valore della loss generando in maniera casuale un nuovo set di parametri, è possibile sfruttare la direzione di massima variazione della loss data dal gradiente.
+
+In un problema di minimizzazione siamo interessati alla direzione di massima discesa della funzione, quindi all'antigradiente:
+.image images/antigradiente.png
+
+Conoscendo la direzione di massima variazione bisogna solo decidere l'entità dello spostamento da effettuare lungo tutte le direzioni. Questo parametro è il learning rate: λ
+
+* Aggiornamento vanilla
+
+La strategia di aggiornamento dei parametri più intuitiva è quella di variare tutti i parametri nella direzione indicata dall'antigradiente, di una quantità pari a λ.
+.image images/vanilla.png
+
+Questo tipo di aggiornamento soffre di alcuni problemi:
+
+- Non tiene conto della sparsità delle features in ingresso: effettua un aggiornamento pari a λ sia per features frequenti che non.
+- λ è costante e non è detto che sia stato scelto in modo tale da garantire la convergenza: si potrebbe saltare da un bordo all'altro del punto di minimo, senza mai scendere.
+- Punti di sella e plateau: in questi casi il gradiente è nullo, quindi l'aggiornamento è nullo. Di conseguenza, anche se non siamo in un minimo l'ottimizzazione non può procedere.
+
+* Momentum Update
+Si può interpretare la discesa del gradiente come la discesa di un corpo puntiforme su una superficie in uno spazio |W|-dimensioanale.
+Sfruttando questa analogia è possibile aggiornare la formula vanilla, considerando la velocità che nel tempo ha raggiunto il punto ed il coefficiente di attrito (erroneamente definito momento) della superficie:
+.image images/momentum.png
+
+L'immagine mostra sulla sinistra il percorso seguito dal vanilla update e sulla destra quello seguito dal momentum update.
+.image images/momentum_1.png
+
+* AdaGrad
+Il momentum update ha modificato la sola velocità di convergenza del metodo, lasciando però inalterati i problemi dell'aggiornamento vanilla.
+
+AdaGrad cerca di ovviare ai problemi dell'aggiornamento vanilla, modificando il learning rate *singolarmente* per ogni parametro. Fa parte quindi della categoria dei metodi adattivi.
+La formula utilizzata per l'aggiornamento del singolo parametro deriva da quella vanilla ed è:
+.image images/adagrad.png
+La formula tiene conto delle variazioni passate del parametro e varia il learning rate effettivo in funzione di queste.
+ε è un termine usato per evitare la divisione per zero nel caso di derivate parziali nulle.
+
+* AdaDelta
+AdaGrad ha il problema di ridurre monotonicamente il learning rate per parametro, facendo in modo che nel caso di forti variazioni il learning rate effettivo sia nullo e quindi impedisce l'aggiornamento del termine.
+
+Per ovviare a questo problema AdaDelta non considera tutta la storia delle variazioni del parametro, ma solo le ultime w (window size).
+Per evitare di dover memorizzare w termini per ogni variabile, viene utilizzata la media con decadimento, che permette di memorizzare solo l'ultimo termine della serie.
+.image images/adadelta_avg.png
+Gli autori, dopo aver fatto considerazioni sulle unità di misura dell'aggiornamento, sono arrivati perfino a rimuovere il learning rate ed a rendere totalmente adattivo il metodo in funzione dell'intervallo temporale considerato.
+.image images/adadelta.png
+
+* RMSProp
+RMSProp ha la stessa derivazione di Adadelta. La differenza principale consiste nell'aver mantenuto il learning rate λ e nell'uso di una media dei quadrati dei gradienti con decadimento esponenziale, anziché utilizzare una media con un decadimento definito in funzione della larghezza della window scelta, E va intesa in questo senso nella formulazione seguente:
+.image images/rmsprop.png
+
+* ADAM
+ADAM (Adaptive Moment Estimation), come Adadelta e RMSProp, modifica il learning singolarmente per ogni parametro.
+Per farlo memorizza la media con decadimento esponenziale del quadrato dei gradienti in v_t ed inoltre (differenza con RMSProp) mantiene anche la media con decadimento esponenziale dei gradenti in m_t.
+.image images/adam_param.png
+L'inizializzazione a zero di questi vettori influenzava l'entità dell'aggiornamento nelle fasi iniziali del training, facendo tendere a zero anche i nuovi valori. Motivo per il quale gli autori, prima di applicare l'aggiornamento, modificano i valori:
+.image images/adam_param_fixed.png
+
+* ADAM
+La regola di aggiornamento è la stessa di AdaDelta e RMSProm, quindi sostituendo si ha:
+.image images/adam.png
+
+* Ottimizzazione
+Le animazioni mostrano il comportamento di alcuni algoritmi di ottimizzazione su una generica superficie della loss function ed in presenza di un punto di sella.
+.image images/loss_surface.gif
+
+* Ottimizzazione
+.image images/saddle_point.gif
+
+* Sperimentazione
+
+* Sperimentazione
+Gli algoritmi di ottimizzazione precedentemente presentati sono stati testati sulla nota architettura LeNet per la classificazione di cifre manoscritte.
+.image images/lenet.png
+L'implementazione dell'architettura della rete è stata fatta in Tensorflow, così come la visualizzazione dei risultati e l'uso degi algoritmi di ottimizzazione.
+Il dataset utilizzato è il MNIST: dataset di cifre manoscritte, memorizzate in immagini 28x28 in scala di grigi.
+La fase di training è stata svolta parallelamente sulla stessa architettura. La metodologia di training utilizzata è quella dell Minit Batch Gradient descent (cioè train con batch di istanza d'esempio parallelamente) con batch di dimensione 50 e 20000 iterazioni.
+
+* Sperimentazione
+
+La visualizzazione dei risultato è fatta mediante Tensorboard: [[http://0.0.0.0:6006][DEMO]]
+
+Nella demo vengono mostrati il valore della loss e l'accuratezza delle previsioni sui dati di training.
+Tensorboard offre la possibilità di navigare sui dati salvati nei sommari, così da poter visualizzare efficacemente le differenze.
+
+* Sperimentazione
+I risultati della valutazione dell'accuratezza della classificazione sullo split di test sono mostrati in tabella:
+.image images/res.png
+
+* Conclusione
+Dall'analisi e dalla sperimentazione precedentemente mostrata si evince una netta superiorità degli algoritmi di aggiornamento dei parametri adattivo rispetto a quelli non adattivo.
+      
+AdaDelta seppur rimuovendo la necessità di definire un learning rate ha performance peggiori sia per quanto riguarda le capacità di apprendimento (misurate mediante la training accuracy) sia sulle capacità di generalizzazione (misurata mediante la test accuracy).
+
+Il processo di decadimento del learning rate in funzione della sparsità delle features d'ingresso è di fondamentale importanza per garantire un train più veloce e migliorare anche la capacità di generalizzazione della rete.
+                        
+Metodi come RMSProp e ADAM si sono dimostrati superiori rispetto agli altri metodi testati. Questi metodi pur soffrendo della necessità di definizione iniziale del learning rate, riescono a essere robusti alle variazioni della loss function.
