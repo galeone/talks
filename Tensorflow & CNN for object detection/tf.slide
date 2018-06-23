@@ -1,0 +1,517 @@
+Tensorflow & CNN for object detection
+4 May 2016
+Tags: tensorflow python
+
+Paolo Galeone
+paolo.galeone@studio.unibo.it
+https://github.com/galeone
+https://www.nerdz.eu/nessuno.
+@paolo_galeone
+
+* Topics at a glance
+
+*Tensorflow*: a brief introduction
+
+- Tensors
+- Computation graph & Sessions
+- Symbolic computing
+- Define Deep learning architectures
+- Demo: tensorboard visualizations for a simple multylayer CNN
+
+*CNN*for*object*detection*
+ 
+- Localization as Regression
+- R-CNN
+- Fast R-CNN, Faster R-CNN
+- Yolo
+
+* Tensorflow
+
+* Overview
+
+From the Tensorlow [[https://www.tensorflow.org/versions/r0.8/get_started/basic_usage.html][documentation]]:
+
+TensorFlow is a programming system in which you *represent*computations*as*graphs*.
+
+Nodes in the graph are called *ops* (short for operations).
+
+An op takes zero or more Tensors, performs some computation, and produces zero or more Tensors.
+
+To compute anything, a graph must be launched in a Session. A Session places the graph ops onto Devices, such as CPUs or GPUs, and provides methods to execute them.
+
+These methods return tensors produced by ops as *numpy*ndarray* objects in *Python*, and as tensorflow::Tensor instances in *C*and*C++*.
+
+* What is a Tensor?
+
+Formally, tensors are multilinear maps from vector spaces to the real numbers.
+Let V: vector space, V* its dual space
+.image images/tensor-def.png
+- A scalar is a tensor
+.image images/tensor-scalar.png
+- A vector is a tensor:
+.image images/tensor-vector.png
+- A matrix is a tensor:
+.image images/tensor-matrix.png
+
+* What is a Tensor?
+
+Intuitively you can think of a Tensor as a *n-dimensional*array*or*list*.
+Tensorflow programs use a tensor data structure to represent *all*data*.
+
+Every tensor has:
+
+A *Rank*: the number of dimensions of the tensor. The following tensor has a rank of 2:
+
+    t = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+A *Shape*: is another way to describe tensors dimensionality.
+- A tensor with *rank* 0 has shape [] (a scalar)
+- A tensor with *rank* 1 has shape [D0] (A 1-D tensor with shape=[5])
+- A tensor with *rank* 2 has shape [D0, D1] (A 2-D tensor with shape=[3,4])
+- ...
+
+A *Type*: Tensorflow provides different types assignable to a tensor: tf.float32, tf.float64, tf.int8, ...
+
+* The computation graph
+
+The computation graph is the definition of the relations among input tensors, ops, and output tensors.
+
+.image images/graph_vis_animation.gif 
+
+* The computation graph: how to use it
+*Construction*phase*: assembles the graph. Defines the relations between tensors and ops.
+
+	import tensorflow as tf
+	
+	# Create a Constant op that produces a 1x2 matrix.  The op is
+	# added as a node to the default graph.
+	#
+	# The value returned by the constructor represents the output
+	# of the Constant op.
+	matrix1 = tf.constant([[3., 3.]])
+	
+	# Create another Constant that produces a 2x1 matrix.
+	matrix2 = tf.constant([[2.],[2.]])
+	
+	# Create a Matmul op that takes 'matrix1' and 'matrix2' as inputs.
+	# The returned value, 'product', represents the result of the matrix
+	# multiplication.
+	product = tf.matmul(matrix1, matrix2)
+
+
+* The computation graph: how to use it
+- *Execution*phase*: uses a *session* to execute ops in the graph on a specified device.
+
+    # Launch the default graph.
+    with tf.Session() as sess:
+        with tf.device("/gpu:1"):
+            # To run the matmul op we call the session 'run()' method, passing 'product'
+            # which represents the output of the matmul op.  This indicates to the call
+            # that we want to get the output of the matmul op back.
+            #
+            # All inputs needed by the op are run automatically by the session.  They
+            # typically are run in parallel.
+            #
+            # The call 'run(product)' thus causes the execution of three ops in the
+            # graph: the two constants and matmul.
+            #
+            # The output of the op is returned in 'result' as a numpy `ndarray` object.
+            result = sess.run(product)
+            print(result)
+            # ==> [[ 12.]]
+
+* Symbolic computing
+*Placeholders*:
+Until now, we used Tensorflow graph to compute ops on constant values.
+But in Machine Learning we need to define a model and then *feed*it* with data.
+
+To achieve Tensorflow has the concept of *placeholder*: a symbolic value placed in the graph that has to be replaced with a real value at execution time.
+
+The common use case is the use of placeholders as input value of the model.
+
+    # Input placeholder. An undefined number of rows and 784 columns (28x28 image)
+    x = tf.placeholder(tf.float32, [None, 784])
+    # Input placeholder. A variable that represents the probability to drop neurons in the dropout phase
+    keep_drop = tf.placeholder(tf.float32)
+
+* Symbolic computing
+*Variables*
+The optimization algorithms used in Machine Learning work with incremental changes of parameters, in order to optimize a function.
+
+Tensorflow variables maintain state across executions of the graph. Thus the optimization algorithm update the variable values to minimize the loss.
+
+    # W is the "weights" variable, initialized with a tensor with rank 2, with size 784x10
+    W = tf.Variable(tf.zeros([784,10]))
+    # b is the "bias" variable, initialized with a tensor of 10 zeros
+    b = tf.Variable(tf.zeros([10]))
+
+    # y is the softmax operation, on the 10 values returned from tf.matmul(x,W) + b
+    y = tf.nn.softmax(tf.matmul(x,W) + b)
+
+
+* Symbolic computing
+Using a graph to represent computations, tensorflow *knows* the flow of tensors across this graph.
+Therefore, after defining a *loss*function* for the current model, tensorflow can apply the *backpropagation*algorithm* in order to efficiently determine how your variables affect the cost you ask it to minimize.
+   
+    # Define a placeholder that represents the real label for the current batch
+    # Where None in the first dimension indicate that the batch size can by any
+    y_ = tf.placeholder(tf.float32, [None, 10])
+
+    # Define the loss function (cross entropy):
+    cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
+    
+    # Define the train step
+    train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
+
+That's it.
+
+* Symbolic computing
+Now we can easily train the model feeding it with the current batches of data. The following example represents a SGD (Stochastic Gradient Descent) application.
+
+    for i in range(1000):
+        batch_xs, batch_ys = mnist.train.next_batch(100)
+        sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
+
+* Deep learning
+Tensorflow makes the definition of deep architectures easy.
+The following example (from the tensorflow website) is a simple 2 layer conv net built to classify digits. Trained on the MNIST dataset.
+
+To make the code easyer to read we define some helper functions:
+
+    def weight_variable(shape):
+        initial = tf.truncated_normal(shape, stddev=0.1)
+        return tf.Variable(initial)
+    
+    def bias_variable(shape):
+        initial = tf.constant(0.1, shape=shape)
+        return tf.Variable(initial)
+    
+    # 2d convolution of x and W, with stride 1 along every dimension and 0 padding
+    def conv2d(x, W):
+        return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
+
+    # max pooling, with a 2x2 kernel and a stride of 2 along x and y
+    def max_pool_2x2(x):
+        return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+
+* Deep learning
+
+The first conv layer extracts 32 features for every 5x5 patch across the input image
+	
+	with tf.variable_scope('layer_1'):
+		# Weight and bias for the first convolutional layer
+		W_conv1 = weight_variable([5, 5, 1, 32])
+		b_conv1 = bias_variable([32])
+		# The tf.conv2d operations wants a 4-d tensor
+		x_image = tf.reshape(x, [-1,28,28,1])
+		# convolution. Use of ReLU activation function
+		h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
+		# max pool
+		h_pool1 = max_pool_2x2(h_conv1)
+
+The second conv layer extracts 64 features for every 5x5x32 input volume.
+
+	with tf.variable_scope('layer_2'):
+		W_conv2 = weight_variable([5, 5, 32, 64])
+		b_conv2 = bias_variable([64])
+		
+		h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
+		h_pool2 = max_pool_2x2(h_conv2)
+
+* Deep learning
+
+The first FC layer has 1024 neurons fully connected to the 7*7*64 features extracted.
+
+	with tf.variable_scope('fc_layer1'):
+		W_fc1 = weight_variable([7 * 7 * 64, 1024])
+		b_fc1 = bias_variable([1024])
+
+		h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*64])
+		h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
+
+The dropout operation is executed in function of the keep_prob placeholder.
+
+    with tf.variable_scope('dropout'):
+        keep_prob = tf.placeholder(tf.float32)
+        h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
+
+Finally the read out layer converts the 1024 features extracted to 10 probabilities.
+
+	with tf.variable_scope('read_out_fc2'):
+		W_fc2 = weight_variable([1024, 10])
+		b_fc2 = bias_variable([10])
+
+		y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
+
+* Tensorflow & CNN
+
+* Tensorflow & CNN
+
+The tensorboard results are based on the MIT CBCL face datasets. The architecture is similar to the one discussed previously.
+
+*Demo*Time*
+
+.link https://github.com/galeone/mlcnn Multylayer CNN source code
+.link http://0.0.0.0:6006 Tensorboard Demo
+
+* CNN for object detection
+
+* Computer vision tasks:
+
+*Single*object*:
+- Classification
+- Classification + Localization
+
+.image images/classification-localization.png
+
+* Computer vision tasks:
+
+*Multiple*objects*:
+- Object Detection
+- Instance Segmentation
+
+.image images/detection-segmentation.png
+
+* CNN for object detection
+Classification + Localization task:
+
+*Classification*: C classes
+
+- Input: Image
+- Output: Class label
+- Evalutation metric: accuracy
+
+*Localicazion*:
+
+- Input: image
+- Output: box in the image `(x,y,w,h)`
+- Evaluation metric: intersection over union
+
+*Classification*+*Localization*: do both
+
+* Classification as Regression
+Having only one object to detect, image classification+Localization is simpler than detection.
+We *exploit* a pre-trained classification model to do the regression task.
+
+.image images/loc-as-reg.png
+
+* Classification as Regression
+Change the architecture, attach a new fully-connected *regression*head* to the network.
+
+.image images/regression-head.png
+
+* Classification as Regression
+Train the regression head only with SGD and L2 loss. At test time use both heads to predict class + box coordinates.
+
+.image images/train-reg-head.png
+
+The classification head produces *C*numbers*: one per class.
+The regression heads can produce: *4*numbers*: if the regression head is class agnostic.
+*4*x*C*numbers*: if the regression head is class specific.
+
+* Classification as Regression
+
+*Problem*: images have different sizes, the object can be in a non central position and have a different dimension from the learned one.
+
+*Solution*: sliding window. The Overfeat architecture [1]
+*3*steps*:
+
+- Run classification + regression network at multiple locations on a high-res image
+- Convert FC layers into convolutional layers for efficient computation
+- Combine classifier and regressor predictions across all scales for final predition
+
+* Step 1
+Run classification + regression network at multiple locations on a high-res image
+
+.image images/1st-step.png
+
+* Step 2
+Convert FC layers into convolutional layers for efficient computation:
+*Yann*LeCun* (the father of LeNet) says:
+
+.image images/fc-is-a-lie.png
+
+* Step 2
+Convert FC layers into convolutional layers for efficient computation
+
+.image images/2nd-step-1.png
+
+* Step 2
+Convert FC layers into convolutional layers for efficient computation
+
+.image images/2nd-step-2.png
+
+* Step 2
+Convert FC layers into convolutional layers for efficient computation
+
+.image images/2nd-step-3.png
+.image images/spatial-map-of-output-vectors.png
+
+* Step 3
+Combine classifier and regressor predictions across all scales for final predition
+
+.image images/3rd-step.png
+
+It works and it's pretty easy to implement.
+
+* Object Detection as Classification
+
+*Problem*: need to test many positions and scale for every class C.
+*Possibile*solution*: look only at a tiny subset of possible solutions.
+
+Idea implemented for the first time in *R-CNN* the paper of Girschick et al, “Rich feature hierarchies for accurate object detection and semantic segmentation”, CVPR 2014
+
+* R-CNN
+
+R-CNN = Region Proposal + CNN (+ SVM)
+
+*Region*Proposal*: class agnostic object detector for blob-like regions.
+
+.image images/r-cnn.png
+
+* R-CNN: training
+
+From a pretrained CNN from classification (eg: VGG trained on ImageNet):
+For every train image:
+
+- Extract regions using a region proposal
+- For each region: warp the region to CNN size, run forward trough CNN and save last pooling layer features to disk.
+.image images/r-cnn-train.png
+
+* R-CNN: training
+
+- For each class: train one *binary*SVM* to classify region features, previously saved to disk.
+.image images/r-cnn-svm.png
+
+* R-CNN: training (last step)
+- For each class, train a linear regressor model to map from cached features to offsets to Ground Truth boxes to make up some "sightly wrong" proposals.
+.image images/r-cnn-bbox.png
+
+* R-CNN: problems
+
+1. Slow at test-time: need to run full forward pass of CNN for each region proposal
+2. SVMs and regressors are post-hoc: CNN features not updated in response to SVMs and regressors
+3. Complex multistage training pipeline
+
+*Solution*: Fast R-CNN
+
+* Fast R-CNN
+
+.image images/fast-r-cnn.png
+
+* Fast R-CNN
+
+*Problem*#1*solution*: share computation of convolutional layers among proposals for an image.
+R-CNN uses the Spatial Piramid Pooling (SPP-net) as described in: Spatial Pyramid Pooling in Deep Convolutional Networks for Visual Recognition [[http://arxiv.org/abs/1406.4729]]
+
+.image images/spp-net.png
+
+Remember what Yan LeCun said?
+
+* Fast R-CNN
+The feature map (SPP layer) is computed only once for the whole image (for each class).
+The proposals are projected into the feature map location and the features in that region are passed to the FC layer for the classification task.
+
+.image images/spp-region-proposals.png
+
+* Fast R-CNN
+*Problem*#2*&*#3*solution*: train the whole system end-to-end once.
+
+.image images/fast-r-cnn-train.png
+
+* R-CNN vs Fast R-CNN
+
+.image images/fast-vs-nonfast.png
+
+*mAP*:  “mean average precision”. The mean of all IoU (Intersection of Union of bounding boxes detected with the ground truth bounding boxes) for each class and then average over classes.
+mAP is a number between 0 and 100. The higher the better.
+
+* Fast R-CNN problems:
+
+Test time speed does not include region proposals
+
+*Solution*: just make the CNN do the region proposals too.
+
+* Faster R-CNN
+
+.image images/faster-r-cnn.png
+
+Insert a *Region*Proposal*Network* (RPN) after the last convolutional layer.
+RPN trained to directly produce region proposals; no need for external region proposals!
+
+* Faster R-CNN: Region Proposal Network
+
+.image images/faster-r-cnn-rpn.png
+
+Sliding window on the feature map. Every window is passed to a small network for:
+
+- classifying object or not-object and regressing bbox locations
+
+Position of the sliding window provides localization information with reference to the image. Box regression provides finer localization information with reference to this sliding window.
+
+* Faster R-CNN: Region Proposal Network
+
+.image images/faster-r-cnn-rpn-1.png
+
+Use *N*anchor*boxes* at each location. (N is the number of classes). Anchors are translation invariant: use the same ones at every location.
+
+*Regression* gives offsets from anchor boxes (4n numbers -> regression head. Class specific).
+
+*Classification* gives the probability that each (regressed) anchor shows an object.
+
+* Faster R-CNN: training
+
+.image images/faster-r-cnn-train.png
+
+One network, four losses
+
+- RPN classification (anchor good / bad)
+- RPN regression (anchor -> proposal)
+- Fast R-CNN classification (over classes)
+- Fast R-CNN regression (proposal -> box)
+
+* Faster R-CNN: results
+
+.image images/r-cnn-general-results.png
+
+Lets see a totally different approach...
+
+* YOLO: You Look Only Once
+
+.image images/yolo.png
+
+Apply a single neural network to the full image. This network divides the image into regions and predicts bounding boxes and probabilities for each region. These bounding boxes are weighted by the predicted probabilities. Then treshold.
+
+* YOLO: Detection as Regression
+
+Resize input image to 448x448.
+
+Divide image into S x S grid.
+
+Within each grid cell predict:
+
+- B Boxes: 4 coordinates + confidence
+- Class scores: C numbers
+
+Regression from image to 7 x 7 x (5 * B + C) tensor.
+
+* YOLO: performance
+
+Yolo is extremely fast, as you can see in the video.
+
+.html html/yolo.htm
+
+* YOLO: performace
+
+Yolo is faster than Faster R-CNN, but less accurate.
+.image images/yolo-bench.png
+
+* References
+
+[1] OverFeat: Integrated Recognition, Localization and Detection using Convolutional Networks: [[http://arxiv.org/abs/1312.6229]]
+[2] [[https://www.facebook.com/yann.lecun/posts/10152820758292143]]
+[3] [[http://cs231n.stanford.edu/slides/winter1516_lecture8.pdf]]
+[4] Fully Convolutional Neural Networks for Classification, Detection & Segmentation: [[http://cvn.ecp.fr/personnel/iasonas/slides/FCNNs.pdf]]
+[5] Fast R-CNN: [[http://arxiv.org/pdf/1504.08083v2.pdf]]
+[6] Spatial Pyramid Pooling in Deep Convolutional Networks for Visual Recognition [[http://arxiv.org/abs/1406.4729]]
+[7] You Only Look Once: Unified, Real-Time Object Detection [[http://arxiv.org/abs/1506.02640]]
