@@ -1,0 +1,13 @@
+[Unit]
+Description=Go Present, talks folder
+
+[Service]
+Restart=always
+Type=simple
+Environment="GOROOT=/home/pgaleone/go"
+WorkingDirectory=/home/pgaleone/talks/
+ExecStart=/home/pgaleone/go/bin/present -base .
+ExecStop=/usr/bin/bash -c "kill $(ps aux |grep present |awk '{print $2}' | sort -n| head -n1)"
+
+[Install]
+WantedBy=multi-user.target
