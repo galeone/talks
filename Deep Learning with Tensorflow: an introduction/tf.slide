@@ -1,4 +1,5 @@
 Deep Learning with Tensorflow: an introduction
+
 22 Jun 2018
 Tags: tensorflow python deep-learning
 
@@ -40,10 +41,10 @@ https://stackoverflow.com/users/2891324/nessuno
 
 * Deep learning: just stacked layers of neurons?
 *Neural*Networks*: supervised learning models made by artificial neurons
-*Deep*Neural*Networks*: neural networks with a number of layer *greater*than*1*
+*Deep*Neural*Networks*: neural networks with a number of layers *greater*than*1*
 .image images/deep_nn.png
 
-Depending on the network topology, neural netwokrs can learn to extract different features and thus *solve*different*problems*.
+Depending on the network topology, neural networks can learn to extract different features and thus *solve*different*problems*.
 
 * Convolutional Neural Networks
 
@@ -151,7 +152,7 @@ The computation graph is the definition of the relations among input tensors, op
 Until now, we used Tensorflow graph to compute ops on constant values.
 But in Machine Learning we need to define a model and then *feed*it* with data.
 
-To achieve Tensorflow has the concept of *placeholder*: a symbolic value placed in the graph that has to be replaced with a real value at execution time.
+To achieve this, Tensorflow has the concept of *placeholder*: a symbolic value placed in the graph that has to be replaced with a real value at execution time.
 
 The common use case is the use of placeholders as input value of the model.
 
@@ -162,7 +163,7 @@ The common use case is the use of placeholders as input value of the model.
 *Variables*
 The optimization algorithms used in Machine Learning work with incremental changes of parameters, in order to optimize a function.
 
-Tensorflow variables maintain state across executions of the graph. Thus the optimization algorithm update the variable values to minimize the loss.
+Tensorflow variables maintain state across executions of the graph. Thus the optimization algorithm updates the variable values to minimize the loss.
 
     # W is the "weights" variable, initialized with a tensor with rank 2, with size 784x10
     W = tf.Variable(tf.zeros([784,10]))
@@ -193,7 +194,7 @@ That's it.
 Tensorflow makes the definition of deep architectures easy.
 The following example is a simple 2 layer CNN that expects as input a batch of 28x28x3 images and learns to extract features that will be used *to*classify*the*input*.
 
-To make the code easyer to read we define some helper functions (just for learning! tensorflow has *a*lot* of layers already implemented in the `tf.layers` package):
+To make the code easier to read we define some helper functions (just for learning! tensorflow has *a*lot* of layers already implemented in the `tf.layers` package):
 
     def weight_variable(shape):
         initial = tf.truncated_normal(shape, stddev=0.1)
@@ -256,7 +257,7 @@ How to use this network to build an image classifier?
 
 * Classify Cat/Dog images using tf.esitmator and tf.data
 
-`tf.Esimator` is an high level API that greatly simplifies machine learning programming. Estimators encapsulate the following actions:
+`tf.Esimator` is a high level API that greatly simplifies machine learning programming. Estimators encapsulate the following actions:
 
 - training/evaluation
 - evaluation/serving
@@ -356,6 +357,6 @@ Once defined the `model_fn` and the `get_input_fn` we can train end evalute the 
     model.train(train_input_fn)
     model.evaluate(eval_input_fn)
 
-While the model train, we can open `tensorboard --logdir model_dir` to see the training progress.
+While the model trains, we can open `tensorboard --logdir model_dir` to see the training progress.
 
 [[http://localhost:6006/]]
