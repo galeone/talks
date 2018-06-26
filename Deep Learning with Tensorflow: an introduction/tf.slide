@@ -257,7 +257,7 @@ How to use this network to build an image classifier?
 
 * Classify Cat/Dog images using tf.esitmator and tf.data
 
-`tf.Esimator` is a high level API that greatly simplifies machine learning programming. Estimators encapsulate the following actions:
+`tf.Esimator` is a high-level API that greatly simplifies machine learning programming. Estimators encapsulate the following actions:
 
 - training/evaluation
 - evaluation/serving
