@@ -131,7 +131,7 @@ This is something good.
 
 `tf.contrib` has inside *107*indipendent*projects*: this is not maintenable at all and it's completely no sense having 107 different projects inside the Tensorflow project iself.
 
-If you're using `tf.contrib` inside your codebase, you can start updating your codebase iff you're using a method with a counterpart inside `tf.`.
+If you're using `tf.contrib` inside your codebase, you can start updating your codebase iff you're using a method with a counterpart inside `tf.`
 
 Otherwise, you have to look at this *HUGE* list, in order to know if the `tf.contrib.project` you're using:
 
@@ -146,6 +146,9 @@ Otherwise, you have to look at this *HUGE* list, in order to know if the `tf.con
 
 * References
 
-- The best article about Tensorflow 2.0: https://pgaleone.eu/tensorflow/gan/2018/11/04/tensorflow-2-models-migration-and-new-design/
-- keras layers are not tf.layers: https://github.com/tensorflow/tensorflow/issues/23873
-- tf.contrib sunsetting: https://github.com/tensorflow/community/blob/rfc-contrib/rfcs/20180907-contrib-sunset.md#list-of-projects
+- The best article about Tensorflow 2.0
+.link https://pgaleone.eu/tensorflow/gan/2018/11/04/tensorflow-2-models-migration-and-new-design/
+- keras layers are not tf.layers
+.link https://github.com/tensorflow/tensorflow/issues/23873
+- tf.contrib sunsetting
+.link https://github.com/tensorflow/community/blob/rfc-contrib/rfcs/20180907-contrib-sunset.md
