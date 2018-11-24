@@ -1,0 +1,121 @@
+What's new in Tensorflow 2.0
+1 Dec 2018
+Tags: tensorflow python
+
+Paolo Galeone
+nessuno@nerdz.eu
+https://pgaleone.eu/
+https://github.com/galeone
+https://www.nerdz.eu/nessuno.
+@paolo_galeone
+
+* Tensorflow 2.0: why and when?
+
+* Why?
+
+Tensorflow 1.x has a steep learning curve, because it uses *dataflow*graphs* to represent computation.
+
+If you come from an imperative programming language (C, Python, ...) you're not used to think as Tensorflow 1.x needs:
+
+1. Define the computational graph
+2. Execute the described computation inside a Session
+
+In Tensorflow 2.0 the *eager*mode* will be the default.
+
+*Eager*mode*
+
+TensorFlow’s eager execution is an *imperative*programming*environment*that*evaluates*operations*immediately,*without*building*graphs*: operations return concrete values instead of constructing a computational graph to run later.
+
+* TL;DR
+
+> People are used to think in a imperative way
+> Everybody want's to do Machine Learning
+> Nobody want's to struggle with a new way of thinking
+> PyTorch - the Tensorflow main competitor - uses eager by default
+
+Tensorflow is becoming PyTorch.
+
+.image images/shock-kermit.webp
+
+* TL;DR
+
+Fortunately, it will be possibile to switch between graph mode and eager mode.
+
+In Tensorflow 1.x is it possibile to enable eager mode.
+In Tensorflow 2.x it will be possibile to enable graph mode.
+
+In short: the main reason is to lower the entry barrier (and thus increase the userbase - marketing move?)
+
+*When?*
+
+The very first, unstable, draft will be available by the end of 2018.
+
+The release date of the official 2.0 release is not clear, but it will be more or less by the end of Sprint 2019.
+
+* It's just eager mode enabled by default?
+
+Of course not.
+
+There will be a lot of changes, most of them will require a *complete*rewriting*of*the*existing*codebases*.
+
+1. Transition from a graph-based way of thinking to an Object Oriented approach: from `tf.layers` to *Keras*
+2. Complete removal of `tf.contrib` and creation of separate projects
+3. Removal of deprecated and duplicated APIs
+4. Public design process: further changes are still discussed in the Tensorflow Discussion Group where everyone can partecipate.
+
+* Object Oriented approach: Keras layers
+
+In *Tensorflow*1.x* you have to worry about variables scoping, reusing, gathering.
+
+Using a GAN as an example:
+
+    def generator(inputs):
+        with tf.variable_scope("generator"):
+            fc1 = tf.layers.dense(inputs, units=64, activation=tf.nn.elu, name="fc1")
+            fc2 = tf.layers.dense(fc1, units=64, activation=tf.nn.elu, name="fc2")
+            G = tf.layers.dense(fc2, units=1, name="G")
+        return G
+
+    def discriminator(inputs, reuse=False):
+        with tf.variable_scope("discriminator", reuse=reuse):
+            fc1 = tf.layers.dense(inputs, units=32, activation=tf.nn.elu, name="fc1")
+            D = tf.layers.dense(fc1, units=1, name="D")
+        return D
+
+
+* Object Oriented approach: Keras layers
+
+In *Tensorflow*2.0* you won't have to worry about: anything, just define the models using `tf.keras.layers` instead of `tf.layers`:
+
+    def generator(input_shape):
+        inputs = tf.keras.layers.Input(input_shape)
+        net = tf.keras.layers.Dense(units=64, activation=tf.nn.elu, name="fc1")(inputs)
+        net = tf.keras.layers.Dense(units=64, activation=tf.nn.elu, name="fc2")(net)
+        net = tf.keras.layers.Dense(units=1, name="G")(net)
+        G = tf.keras.Model(inputs=inputs, outputs=net)
+        return G
+
+    def discriminator(input_shape):
+        inputs = tf.keras.layers.Input(input_shape)
+        net = tf.keras.layers.Dense(units=32, activation=tf.nn.elu, name="fc1")(inputs)
+        net = tf.keras.layers.Dense(units=1, name="D")(net)
+        D = tf.keras.Model(inputs=inputs, outputs=net)
+        return D
+
+* Object Oriented approach: Keras layers
+
+Differences:
+
+- In 2.0: you have a `Model` object to call.
+- In 1.0: you have just an output tensor and sharing variables is complex.
+
+*WARNING*: do *NOT* migrate your models to Keras right now.
+
+`tf.keras.layers` *ARE*NOT* a drop-in replacement for `tf.layers`:
+.link https://github.com/tensorflow/tensorflow/issues/23873
+
+* References
+
+[1]
+[2]
+[3]
