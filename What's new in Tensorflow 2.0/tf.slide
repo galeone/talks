@@ -81,6 +81,11 @@ Using a GAN as an example:
             fc1 = tf.layers.dense(inputs, units=32, activation=tf.nn.elu, name="fc1")
             D = tf.layers.dense(fc1, units=1, name="D")
         return D
+    [...]
+    D_real = discriminator(real_input)
+    G = generator(input_noise)
+    # note the REUSE = True
+    D_fake = discriminator(G, True)
 
 
 * Object Oriented approach: Keras layers
@@ -101,21 +106,46 @@ In *Tensorflow*2.0* you won't have to worry about: anything, just define the mod
         net = tf.keras.layers.Dense(units=1, name="D")(net)
         D = tf.keras.Model(inputs=inputs, outputs=net)
         return D
+    [...]
+    D = discriminator(input_shape)
+    G = generator(noise_shape)
+    D_real = D(real_input)
+    G_fake = D(G(input_noise))
 
 * Object Oriented approach: Keras layers
 
-Differences:
-
-- In 2.0: you have a `Model` object to call.
-- In 1.0: you have just an output tensor and sharing variables is complex.
+- In 2.0: you have a `Model` *object* to use.
+- In 1.0: you have just an *output*tensor* and sharing variables is complex.
 
 *WARNING*: do *NOT* migrate your models to Keras right now.
 
-`tf.keras.layers` *ARE*NOT* a drop-in replacement for `tf.layers`:
+`tf.keras.layers` *ARE*NOT* a drop-in replacement for `tf.layers`
 .link https://github.com/tensorflow/tensorflow/issues/23873
+
+.image images/humble-kermit.webp
+
+
+* tf.contrib sunset
+
+This is something good.
+
+`tf.contrib` has inside *107*indipendent*projects*: this is not maintenable at all and it's completely no sense having 107 different projects inside the Tensorflow project iself.
+
+If you're using `tf.contrib` inside your codebase, you can start updating your codebase iff you're using a method with a counterpart inside `tf.`.
+
+Otherwise, you have to look at this *HUGE* list, in order to know if the `tf.contrib.project` you're using:
+
+- will be removed
+- will be merged into core
+- will be moved to a separate repo
+
+.link https://github.com/tensorflow/community/blob/rfc-contrib/rfcs/20180907-contrib-sunset.md#list-of-projects
+
+* What's next?
+
 
 * References
 
-[1]
-[2]
-[3]
+- The best article about Tensorflow 2.0: https://pgaleone.eu/tensorflow/gan/2018/11/04/tensorflow-2-models-migration-and-new-design/
+- keras layers are not tf.layers: https://github.com/tensorflow/tensorflow/issues/23873
+- tf.contrib sunsetting: https://github.com/tensorflow/community/blob/rfc-contrib/rfcs/20180907-contrib-sunset.md#list-of-projects
