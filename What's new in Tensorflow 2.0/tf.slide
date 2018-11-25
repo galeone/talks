@@ -40,7 +40,7 @@ Tensorflow is becoming PyTorch.
 
 Fortunately, it will be possibile to switch between graph mode and eager mode.
 
-In Tensorflow 1.x is it possibile to enable eager mode.
+In Tensorflow 1.x it is possibile to enable eager mode.
 In Tensorflow 2.x it will be possibile to enable graph mode.
 
 In short: the main reason is to lower the entry barrier (and thus increase the userbase - marketing move?)
@@ -49,7 +49,7 @@ In short: the main reason is to lower the entry barrier (and thus increase the u
 
 The very first, unstable, draft will be available by the end of 2018.
 
-The release date of the official 2.0 release is not clear, but it will be more or less by the end of Sprint 2019.
+The release date of the official 2.0 release is not clear, but it will be more or less by the end of Spring 2019.
 
 * It's just eager mode enabled by default?
 
@@ -60,7 +60,7 @@ There will be a lot of changes, most of them will require a *complete*rewriting*
 1. Transition from a graph-based way of thinking to an Object Oriented approach: from `tf.layers` to *Keras*
 2. Complete removal of `tf.contrib` and creation of separate projects
 3. Removal of deprecated and duplicated APIs
-4. Public design process: further changes are still discussed in the Tensorflow Discussion Group where everyone can partecipate.
+4. Public design process: further changes are still discussed in the Tensorflow Discussion Group where everyone can participate.
 
 * Object Oriented approach: Keras layers
 
@@ -131,7 +131,7 @@ In *Tensorflow*2.0* you won't have to worry about: anything, just define the mod
     train_D = tf.train.AdamOptimizer(1e-5).minimize(D_loss, var_list=D.trainable_variables)
     train_G = tf.train.AdamOptimizer(1e-5).minimize(G_loss, var_list=G.trainable_variables)
 
-Way better approach: is the model itself that carries *its*own*variables*.
+Way better approach: the model itself carries *its*own*variables*.
 
 No more *global*collections*/*variables*.
 
@@ -152,7 +152,7 @@ No more *global*collections*/*variables*.
 
 This is something good.
 
-`tf.contrib` has inside *107*indipendent*projects*: this is not maintenable at all and it's completely no sense having 107 different projects inside the Tensorflow project iself.
+`tf.contrib` has *107*indipendent*projects* inside: this is not maintenable at all and it's complete nonsense having 107 different projects inside the Tensorflow project iself.
 
 If you're using `tf.contrib` inside your codebase, you can start updating your codebase iff you're using a method with a counterpart inside `tf.`
 
@@ -186,7 +186,6 @@ All the changes showed here are the one labeled as `2.0` `rfc:accepted` on the T
 
 Everyone can join the Tensorflow Developer Group and give suggestions.
 
-.image images/bye-kermit.webp 250 250
 
 * References
 
@@ -198,5 +197,10 @@ Everyone can join the Tensorflow Developer Group and give suggestions.
 .link https://github.com/tensorflow/community/blob/rfc-contrib/rfcs/20180907-contrib-sunset.md
 - Accepted RFC for version 2.0
 .link https://github.com/tensorflow/community/pulls?q=is%3Apr+is%3Aclosed+label%3A%22RFC%3A+Accepted%22+label%3A2.0
+
+* References
+
 - Tensorflow Discussion Group
 .link https://groups.google.com/a/tensorflow.org/forum/#!forum/discuss
+
+.image images/bye-kermit.webp
