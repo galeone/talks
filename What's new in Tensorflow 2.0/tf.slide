@@ -29,7 +29,7 @@ TensorFlow’s eager execution is an *imperative*programming*environment*that*ev
 
 > People are used to think in a imperative way
 > Everybody want's to do Machine Learning
-> Nobody want's to struggle with a new way of thinking
+> Nobody wants to struggle with a new way of thinking
 > PyTorch - the Tensorflow main competitor - uses eager by default
 
 Tensorflow is becoming PyTorch.
