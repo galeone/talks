@@ -184,7 +184,9 @@ All the changes showed here are the one labeled as `2.0` `rfc:accepted` on the T
 
 .link https://github.com/tensorflow/community/pulls?q=is%3Apr+is%3Aclosed+label%3A%22RFC%3A+Accepted%22+label%3A2.0
 
-Everyone can join the Tensorflow Developer Group and give suggestions / propose new RFC.
+Everyone can join the Tensorflow Developer Group and give suggestions.
+
+.image images/bye-kermit.webp 250 250
 
 * References
 
