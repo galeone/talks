@@ -34,7 +34,7 @@ TensorFlow’s eager execution is an *imperative*programming*environment*that*ev
 
 Tensorflow is becoming PyTorch.
 
-.image images/shock-kermit.webp
+.image images/shock-kermit.png
 
 * TL;DR
 
@@ -145,7 +145,7 @@ No more *global*collections*/*variables*.
 `tf.keras.layers` *ARE*NOT* a drop-in replacement for `tf.layers`
 .link https://github.com/tensorflow/tensorflow/issues/23873
 
-.image images/humble-kermit.webp
+.image images/humble-kermit.png
 
 
 * tf.contrib sunset
@@ -203,4 +203,4 @@ Everyone can join the Tensorflow Developer Group and give suggestions.
 - Tensorflow Discussion Group
 .link https://groups.google.com/a/tensorflow.org/forum/#!forum/discuss
 
-.image images/bye-kermit.webp
+.image images/bye-kermit.png
