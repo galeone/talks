@@ -1,0 +1,101 @@
+Hands-on Tensorflow 2.0: writing a GAN from scratch
+4 Jun 2019
+Tags: tensorflow python
+
+Paolo Galeone
+nessuno@nerdz.eu
+https://pgaleone.eu/
+https://github.com/galeone
+@paolo_galeone
+
+* About me
+
+.image https://pbs.twimg.com/profile_images/949951677402140672/boueakkR_400x400.jpg 300 300
+
+Computer engineer | Head of ML & CV @ ZURU Tech, Italy | Machine Learning GDE
+
+Blog: [[https://pgaleone.eu]]
+Github: [[https://github.com/galeone]]
+Twitter: [[https://twitter.com/paolo_galeone][@paolo_galeone]]
+
+* A glimpse at Tensorflow 2.0
+
+* A glimpse at Tensorflow 2.0
+
+Tensorflow 1.x has a steep learning curve, because it uses *dataflow*graphs* to represent computation.
+
+If you come from an imperative programming language (C, Python, ...) you're not used to think as Tensorflow 1.x needs:
+
+1. Define the computational graph, first.
+2. Execute the described computation inside a Session.
+
+In Tensorflow 2.0 the *eager*mode* will be the default.
+
+.image https://pbs.twimg.com/profile_images/1103339571977248768/FtFnqC38_400x400.png 250 250
+
+* Eager mode
+
+TensorFlow eager execution is an *imperative*programming*environment*that*evaluates*operations*immediately,*without*building*graphs*: operations return concrete values instead of constructing a computational graph to run later.
+
+- In Tensorflow 1.x it is possibile to enable eager mode.
+- In Tensorflow 2.x it is possible to convert eager-mode code in Graph code (using tf.function).
+
+In short: it is now possibile to use Tensorflow as a replacement for the most common numpy operations.
+
+* It's just eager mode enabled by default?
+
+Of course not.
+
+There will be a lot of changes, most of them will require a *complete*rewriting*of*the*existing*codebases*.
+
+- Transition from a graph-based way of thinking to an Object Oriented approach: from `tf.layers` to *Keras*
+
+*API*clean-up*
+
+- Complete removal of `tf.contrib` and creation of separate projects
+- Removal of deprecated and duplicated APIs
+
+*Better*software*design*
+
+- Removal of Global Collectios, use objects.
+- No more Sessions, use functions.
+
+* Building a GAN from scratch, the Tensorflow 2.0 way
+
+* Building a GAN from scratch, the Tensorflow 2.0 way
+
+*Theory*
+
+- [[https://colab.research.google.com/github/zurutech/gans-from-theory-to-production/blob/master/1.%20GAN%20-%20theory%20and%20applications/1.%20GAN%20-%20theory%20and%20applications.ipynb][Google Colab]] (https://bit.ly/2X2WE1L)
+
+*Practice*
+
+- [[https://colab.research.google.com/github/zurutech/gans-from-theory-to-production/blob/master/2.%20GANs%20in%20Tensorflow/2.1.%20Writing%20a%20GAN%20from%20scratch.ipynb][Google Colab]] (https://bit.ly/2Y7hYmM)
+
+* Conclusion
+
+Tensorflow 2.0 is still in the early stages of the development, and the API can still change. However:
+
+- using the eager mode for fast prototyping, and 
+- tf.function to convert the computationally intensive 
+- the Object Oriented approach that Keras forces to use
+
+it is possibile to develop Machine Learning applications really easily.
+
+From the software engineering point of view, Tensorflow 2.0 is a huge imporvement.
+
+* Annuocement
+
+I'm authoring a book about Tensorflow 2.0 and Neural Networks!
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Hands-On*Neural*Networks*with*Tensorflow*2.0*
+
+_Understanding_the_Tensorflow_architecture,_from_static_graph_to_eager_execution,_designing_Deep_Neural_Networks._
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to receive an email when the book is out, subscribe to the newsletter!
+
+[[https://pgaleone.eu/subscribe/]]
