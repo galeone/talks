@@ -77,7 +77,7 @@ There will be a lot of changes, most of them will require a *complete*rewriting*
 Tensorflow 2.0 is still in the early stages of the development, and the API can still change. However:
 
 - using the eager mode for fast prototyping, and 
-- tf.function to convert the computationally intensive 
+- tf.function to convert the computationally intensive parts, and
 - the Object Oriented approach that Keras forces to use
 
 it is possibile to develop Machine Learning applications really easily.
